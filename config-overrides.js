@@ -1,6 +1,7 @@
 require('debug-utils');
 
 const options = {
+  useBabelrc: true,
   useSassLoader: true,
   useCssModules: true,
   useSourceMaps: false
@@ -33,7 +34,12 @@ const findLoader = (config, {loader: searchedLoader}) => {
 module.exports = function override(config, env) {
   //do stuff with the webpack config...
   const isDev = env === 'development';
-  const {useSassLoader, useCssModules, useSourceMaps} = options;
+  const {useBabelrc, useSassLoader, useCssModules, useSourceMaps} = options;
+
+  const scriptsModuleLoader = findModuleLoader(config, {test: /\.(js|jsx)$/});
+  if (useBabelrc) {
+    scriptsModuleLoader.options.babelrc = true;
+  }
 
   const stylesModuleLoader = findModuleLoader(config, {test: /\.css$/});
   if (useSassLoader) {
