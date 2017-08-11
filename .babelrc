@@ -1,4 +1,4 @@
 {
   "presets": ["react-app"],
-  "plugins": [["component-resolver", {"root": ["./src"]}]]
+  "plugins": ["component-resolver"]
 }

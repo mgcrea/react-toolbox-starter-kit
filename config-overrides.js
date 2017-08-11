@@ -10,7 +10,7 @@ const options = {
   sassDataOption: '@import "' + path.resolve(srcPath, 'styles/_theme.scss') + '";',
   usePostcssSass: false,
   useCssModules: true,
-  useSourceMaps: true
+  useSourceMaps: false
 }
 
 const isString = maybeString => typeof maybeString === 'string';
