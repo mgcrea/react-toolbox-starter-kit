@@ -5,7 +5,8 @@
   "dependencies": {
     "react": "^15.6.1",
     "react-dom": "^15.6.1",
-    "react-scripts": "1.0.11"
+    "react-scripts": "1.0.11",
+    "react-toolbox": "^1.3.4"
   },
   "scripts": {
     "start": "react-app-rewired start",

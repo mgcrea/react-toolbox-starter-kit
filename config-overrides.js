@@ -1,10 +1,16 @@
 require('debug-utils');
+const path = require('path');
+
+const srcPath = path.join(__dirname, 'src');
+const modulesPath = path.join(__dirname, 'node_modules');
 
 const options = {
   useBabelrc: true,
   useSassLoader: true,
+  sassDataOption: '@import "' + path.resolve(srcPath, 'styles/_theme.scss') + '";',
+  usePostcssSass: false,
   useCssModules: true,
-  useSourceMaps: false
+  useSourceMaps: true
 }
 
 const isString = maybeString => typeof maybeString === 'string';
@@ -34,7 +40,7 @@ const findLoader = (config, {loader: searchedLoader}) => {
 module.exports = function override(config, env) {
   //do stuff with the webpack config...
   const isDev = env === 'development';
-  const {useBabelrc, useSassLoader, useCssModules, useSourceMaps} = options;
+  const {useBabelrc, useSassLoader, sassDataOption, useCssModules, useSourceMaps, usePostcssSass} = options;
 
   const scriptsModuleLoader = findModuleLoader(config, {test: /\.(js|jsx)$/});
   if (useBabelrc) {
@@ -42,24 +48,40 @@ module.exports = function override(config, env) {
   }
 
   const stylesModuleLoader = findModuleLoader(config, {test: /\.css$/});
-  if (useSassLoader) {
-    stylesModuleLoader.test = /(\.scss|\.css)$/;
-    stylesModuleLoader.use.push({
-      loader: require.resolve('sass-loader'),
-      options: {
-        sourceMap: useSourceMaps
-      }
-    });
-  }
   const cssLoader = findLoader(stylesModuleLoader, {loader: require.resolve('css-loader')});
-  cssLoader.options.sourceMap = useSourceMaps;
+  if (useSourceMaps) {
+    cssLoader.options.sourceMap = true;
+  }
   if (useCssModules) {
+    // We need `css-hot-loader` for hot reload to work with css modules
     stylesModuleLoader.use.unshift(require.resolve('css-hot-loader'));
     cssLoader.options.modules = useCssModules;
     cssLoader.options.localIdentName = '[local]__[name]__[hash:base64:5]';
   }
-  const postcssLoader = findLoader(stylesModuleLoader, {loader: require.resolve('postcss-loader')});
-  postcssLoader.options.sourceMap = useSourceMaps;
 
+  const postcssLoader = findLoader(stylesModuleLoader, {loader: require.resolve('postcss-loader')});
+  if (useSourceMaps) {
+    postcssLoader.options.sourceMap = true;
+  }
+  if (useSassLoader) {
+    // As a distinct module loader
+    const sassModuleLoader = {
+      test: /\.scss$/,
+      use: stylesModuleLoader.use.slice().concat([{
+        loader: require.resolve('sass-loader'),
+        options: {
+          sourceMap: useSourceMaps,
+          data: sassDataOption
+        }
+      }])
+    }
+    addModuleLoader(config, sassModuleLoader);
+    /*
+    // Overriding styles module loader
+    stylesModuleLoader.test = /(\.scss|\.css)$/;
+    stylesModuleLoader.use.push();
+    */
+  }
+  // dd(postcssLoader.options.plugins);
   return config;
 }
