@@ -1,7 +1,11 @@
 {
-  "name": "online-components",
+  "name": "react-toolbox-starter-kit",
+  "description": "Quickstart powered by create-react-app to play with react-toolbox",
   "version": "0.1.0",
-  "private": true,
+  "main": "src/index.js",
+  "author": "Olivier Louvignes <olivier@mg-crea.com>",
+  "repository": "github:mgcrea/react-toolbox-starter-kit",
+  "license": "MIT",
   "dependencies": {
     "prop-types": "^15.5.10",
     "react": "^15.6.1",
