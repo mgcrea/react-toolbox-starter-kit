@@ -10,7 +10,8 @@ const options = {
   sassDataOption: '@import "' + path.resolve(srcPath, 'styles/_theme.scss') + '";',
   usePostcssSass: false,
   useCssModules: true,
-  useSourceMaps: false
+  useSourceMaps: false,
+  useHotLoader: false
 }
 
 const isString = maybeString => typeof maybeString === 'string';
@@ -33,14 +34,18 @@ const findLoader = (config, {loader: searchedLoader}) => {
     if (isString(loader)) {
       return loader === searchedLoader;
     }
-    return loader.loader.toString() == searchedLoader.toString();
+    return loader.loader.toString() === searchedLoader.toString();
   });
 }
 
 module.exports = function override(config, env) {
   //do stuff with the webpack config...
   const isDev = env === 'development';
-  const {useBabelrc, useSassLoader, sassDataOption, useCssModules, useSourceMaps, usePostcssSass} = options;
+  const {useBabelrc, useSassLoader, sassDataOption, useCssModules, useSourceMaps, useHotLoader, usePostcssSass} = options;
+
+  if (useHotLoader) {
+    config.entry.push('react-hot-loader/patch?quiet=false');
+  }
 
   const scriptsModuleLoader = findModuleLoader(config, {test: /\.(js|jsx)$/});
   if (useBabelrc) {
@@ -49,6 +54,7 @@ module.exports = function override(config, env) {
 
   const stylesModuleLoader = findModuleLoader(config, {test: /\.css$/});
   const cssLoader = findLoader(stylesModuleLoader, {loader: require.resolve('css-loader')});
+  // stylesModuleLoader.include = [srcPath];
   if (useSourceMaps) {
     cssLoader.options.sourceMap = true;
   }
@@ -82,6 +88,8 @@ module.exports = function override(config, env) {
     stylesModuleLoader.use.push();
     */
   }
+
   // dd(postcssLoader.options.plugins);
+  // d(config);
   return config;
 }

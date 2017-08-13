@@ -1,0 +1,14 @@
+.root {
+  display: flex;
+  align-items: center;
+  flex-direction: row;
+  > abbr, [data-react-toolbox="font-icon"] {
+    // color: blue;
+  }
+  text-decoration: none;
+}
+.icon {
+  padding-right: 10px;
+}
+.label {
+}
