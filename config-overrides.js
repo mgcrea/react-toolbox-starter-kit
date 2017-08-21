@@ -12,7 +12,7 @@ const options = {
   useCssModules: true,
   useSourceMaps: false,
   useHotLoader: false
-}
+};
 
 const isString = maybeString => typeof maybeString === 'string';
 
@@ -28,15 +28,15 @@ const findModuleLoader = (config, {test}) => {
   });
 }
 
-const findLoader = (config, {loader: searchedLoader}) => {
-  const loaders = config.use;
-  return loaders.find(loader => {
+const findLoader = (config, {loader: searchedLoader, env = 'development'}) => {
+  const loaders = (env === 'production') ? config.loader : config.use;
+  return loaders.find((loader) => {
     if (isString(loader)) {
       return loader === searchedLoader;
     }
     return loader.loader.toString() === searchedLoader.toString();
   });
-}
+};
 
 module.exports = function override(config, env) {
   //do stuff with the webpack config...
@@ -53,14 +53,21 @@ module.exports = function override(config, env) {
   }
 
   const stylesModuleLoader = findModuleLoader(config, {test: /\.css$/});
+  const stylesModuleLoaders = (env === 'production') ? stylesModuleLoader.loader : stylesModuleLoader.use;
   const cssLoader = findLoader(stylesModuleLoader, {loader: require.resolve('css-loader')});
   // stylesModuleLoader.include = [srcPath];
   if (useSourceMaps) {
     cssLoader.options.sourceMap = true;
   }
   if (useCssModules) {
-    // We need `css-hot-loader` for hot reload to work with css modules
-    stylesModuleLoader.use.unshift(require.resolve('css-hot-loader'));
+    // Load every .css from node_modules as a global file (eg. required for codemirror import)
+    const externalCssModuleLoader = {
+      test: /\.css$/,
+      include: modulesPath,
+      use: [require.resolve('style-loader'), require.resolve('css-loader')]
+    };
+    insertModuleLoader(config, externalCssModuleLoader, 2);
+    stylesModuleLoader.exclude = modulesPath;
     cssLoader.options.modules = useCssModules;
     cssLoader.options.localIdentName = '[local]__[name]__[hash:base64:5]';
   }
@@ -73,7 +80,7 @@ module.exports = function override(config, env) {
     // As a distinct module loader
     const sassModuleLoader = {
       test: /\.scss$/,
-      use: stylesModuleLoader.use.slice().concat([{
+      use: stylesModuleLoaders.slice().concat([{
         loader: require.resolve('sass-loader'),
         options: {
           sourceMap: useSourceMaps,
@@ -85,8 +92,13 @@ module.exports = function override(config, env) {
     /*
     // Overriding styles module loader
     stylesModuleLoader.test = /(\.scss|\.css)$/;
-    stylesModuleLoader.use.push();
+    stylesModuleLoaders.push();
     */
+  }
+
+  // Always use this local copy of react to prevent runtime errors with linked modules
+  if (!config.resolve.alias.react) {
+    config.resolve.alias.react = path.join(modulesPath, 'react');
   }
 
   // dd(postcssLoader.options.plugins);
